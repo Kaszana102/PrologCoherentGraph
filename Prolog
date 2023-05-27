@@ -1,0 +1,151 @@
+	
+insert(X, [], [X]):- !.
+insert(X, [X1|L1], [X, X1|L1]):- X>=X1, !.
+insert(X, [X1|L1], [X1|L]):- insert(X, L1, L).	
+
+insertionSort([], []):- !.
+insertionSort([X|L], S):- 
+	insertionSort(L, S1),
+	insert(X, S1, S).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+usun_zera([],[]).
+usun_zera([X1|L1],Wynik):-
+	X1 is 0,
+	usun_zera(L1,Wynik),!.
+usun_zera([X1|L1],[X1|Wynik]):-
+	usun_zera(L1,Wynik).	
+
+
+
+% dekrementacja X pierwszych elementów listy
+zmniejsz_o_1(Lista,0,Lista).
+zmniejsz_o_1([H|T],X,[NewH|L]):-
+	Iteracja is X-1,
+	NewH is H - 1,
+	zmniejsz_o_1(T,Iteracja,L).
+
+odejmij([Val|T],Wynik):-
+	zmniejsz_o_1(T,Val,Wynik).
+	
+list_length([],0).
+list_length([_|TAIL],N) :- list_length(TAIL,N1), N is N1 + 1.
+
+czyWszystkieSaNieUjemne([X|_],false):- X < 0.
+czyWszystkieSaNieUjemne([],true).
+czyWszystkieSaNieUjemne([H|T],Wynik):-	
+	czyWszystkieSaNieUjemne(T,Wynik).
+	
+czy_graficzny([],true).
+czy_graficzny([0],true).
+czy_graficzny(Lista,Odp):-
+	insertionSort(Lista,[SortedH|SortedT]),
+	% write([SortedH|SortedT]),
+	% write('\n'),
+	list_length([SortedH|SortedT],DlugoscListy),
+	%%%%list_concat([SortedH],SortedT,[SortedH|SortedT]),
+	SortedH < DlugoscListy,
+	odejmij([SortedH|SortedT],PoOdjeciu),
+	czyWszystkieSaNieUjemne(PoOdjeciu,CzySaNieUjemne), % NA WYPADEK, GDY DANE SA UJEMNE OD POCZATKU, INACZEJ NIE MA BLEDU
+	CzySaNieUjemne,
+	
+	usun_zera(PoOdjeciu,BezZer),
+	czy_graficzny(BezZer,Odp),!.
+	
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+list_concat([],L,L).
+list_concat([X1|L1],L2,[X1|L3]) :- list_concat(L1,L2,L3).
+
+list_delete(0,A,[X|B],Wynik):-
+	list_concat(A,B,Wynik),
+	!.
+list_delete(POS,TEMP,[SrcH|SrcT],OTP):-
+	NewPos is POS -1,
+	list_concat(TEMP,[SrcH],NewTemp),
+	list_delete(NewPos,NewTemp,SrcT,OTP), !.
+
+czy_bez_zer([],true).
+czy_bez_zer([H],true):- H > 0.
+czy_bez_zer([H|_],false):- H=0.
+czy_bez_zer([H|T],Wynik):-
+	czy_bez_zer(T,Wynik),!.
+
+getel(0,[X|Y],X).
+getel(N,[X|Y],Wynik):-
+	ID is N - 1,
+	getel(ID,Y,Wynik).
+
+list_length([],0).
+list_length([_|TAIL],N) :- list_length(TAIL,N1), N is N1 + 1.
+
+	
+
+
+czy_spojny_rozw([],_,_,true).
+
+% pierwsze wywołanie, sprawdza na początku czy jest graficzny i czy sa zera podane
+czy_spojny_rozw(Graf,0,[],Odp):-
+
+	czy_graficzny(Graf,CzyGraficzny),
+	CzyGraficzny,
+	czy_bez_zer(Graf,CzyBezZer),
+	CzyBezZer,
+	
+	% wydobycie ostatniego elementu
+	list_length(Graf,Dlugosc),
+	Index is Dlugosc -1,
+	getel(Index,Graf,Val),
+	
+	% usuniecie ostatniego elementu
+	list_delete(Index,[],Graf,PrzedOdjeciem),
+	
+	% dekrementacja elementów listy
+	zmniejsz_o_1(PrzedOdjeciem,Val,PoOdjeciu),
+	usun_zera(PoOdjeciu,BezZer),
+	
+	insertionSort(BezZer,Posortowana),
+	czy_spojny_rozw(Posortowana,Val,Graf,Odp).
+
+% parametr	val jest kontrolny
+czy_spojny_rozw(Graf,Val,CelGrafu,Odp):-
+
+	czy_bez_zer(Graf,CzyBezZer),
+	CzyBezZer,
+
+	write(Graf),
+	write(' '),
+	write(Val),
+	write(' '),
+	write(CelGrafu),
+	write(' '),
+
+
+	% warunek spojnosci
+	list_length(Graf,Dlugosc1),
+	list_length(CelGrafu,Dlugosc2),
+	Dlugosc2 is Dlugosc1 + 1,		
+	
+	% jak spelniony to patrzymy glebiej
+	
+	Index is Dlugosc1 - 1,		
+	getel(Index,Graf,Val2),	
+	
+	list_delete(Index,[],Graf,PrzedOdjeciem),
+	
+	zmniejsz_o_1(PrzedOdjeciem,Val2,PoOdjeciu),
+	usun_zera(PoOdjeciu,BezZer),
+	
+	insertionSort(BezZer,Posortowana),
+	write('\n'),
+	czy_spojny_rozw(Posortowana,Val2,Graf,Odp).	
+	
+czy_spojny_rozw(Graf,Val,CelGrafu,false).
+
+czy_spojny([],true).
+czy_spojny([0],true).
+czy_spojny(Graf,Odp):-
+	insertionSort(Graf,Posortowana),
+	czy_spojny_rozw(Graf,0,[],Odp),!.
+
